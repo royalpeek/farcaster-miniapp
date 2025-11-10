@@ -1,0 +1,7 @@
+{
+  "name": "farcaster & base airdrop hub",
+  "description": "mini app to guide users through farcaster + base airdrop prep tasks.",
+  "url": "https://YOUR_DOMAIN",
+  "permissions": ["user_context"],
+  "manifest_version": "1.0"
+}
