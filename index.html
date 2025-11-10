@@ -4,150 +4,340 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>farcaster & base airdrop hub</title>
+
+  <!-- minimal reset + system font -->
   <style>
-    :root{font-family:Inter, system-ui, -apple-system,'Segoe UI',Roboto,Arial;}
-    body{margin:0;background:#071028;color:#e6eef8;display:flex;align-items:flex-start;justify-content:center;padding:18px}
-    .card{background:#061228;border:1px solid rgba(255,255,255,0.04);width:760px;border-radius:12px;padding:16px;box-shadow:0 8px 28px rgba(2,6,23,0.6)}
-    header{display:flex;align-items:center;justify-content:space-between}
-    h1{font-size:18px;margin:0;text-transform:none}
-    .tabs{display:flex;gap:8px;margin-top:12px}
-    .tab{padding:8px 12px;border-radius:8px;background:transparent;border:1px solid transparent;cursor:pointer}
-    .tab.active{background:linear-gradient(90deg,#07182a,#0b2136);border-color:rgba(255,255,255,0.04)}
-    .row{display:flex;gap:12px;margin-top:14px}
-    .col{flex:1}
-    .task{background:#051225;padding:12px;border-radius:10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-    .small{font-size:13px;color:#9fb0d6}
-    button{background:#083053;border:1px solid rgba(255,255,255,0.04);padding:8px 12px;border-radius:8px;color:#cfe7ff;cursor:pointer}
-    button.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.04)}
-    .status{font-weight:600;padding:6px 10px;border-radius:8px}
-    .done{background:linear-gradient(90deg,#052e19,#073a1f);color:#bff3c1}
-    .pending{background:transparent;color:#9fb0d6}
-    .meta{font-size:12px;color:#8aa3cc;margin-top:6px}
-    input[type=text]{width:360px;max-width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:#071728;color:#dfefff}
-    .center{display:flex;align-items:center;gap:8px}
-    pre{background:#041224;padding:8px;border-radius:8px;color:#9fb0d6;overflow:auto}
+    :root{
+      --bg:#071026; --panel:#071827; --card:#06162a; --muted:#93abc8;
+      --accent:#1e88ff; --accent-2:#6f9cf9; --glass:rgba(255,255,255,0.03);
+      --ok:#7be39a; --danger:#ff7b7b; --radius:14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#041022 140%);color:#e7f3ff}
+    a{color:var(--accent)}
+    .wrap{max-width:980px;margin:28px auto;padding:18px}
+    header.appbar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .logo{
+      width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent-2));
+      display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px;box-shadow:0 6px 20px rgba(10,30,60,0.45)
+    }
+    h1{font-size:18px;margin:0}
+    .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+
+    /* main panel */
+    main.panel{margin-top:18px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent);border-radius:var(--radius);padding:20px;border:1px solid var(--glass);box-shadow:0 10px 40px rgba(2,8,20,0.6)}
+    .top-row{display:flex;gap:12px;align-items:center;justify-content:space-between}
+    .tabs{display:flex;gap:8px;margin-top:14px}
+    .tab{padding:8px 14px;border-radius:12px;background:transparent;border:1px solid transparent;color:var(--muted);cursor:pointer}
+    .tab.active{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:#fff;border-color:rgba(255,255,255,0.04)}
+    .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-top:18px}
+    .column{display:flex;flex-direction:column;gap:12px}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));padding:14px;border-radius:12px;border:1px solid var(--glass)}
+    .task{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px;border-radius:10px;background:rgba(0,0,0,0.12);border:1px solid rgba(255,255,255,0.02)}
+    .task .left{flex:1}
+    .title{font-weight:700}
+    .meta{color:var(--muted);font-size:13px;margin-top:6px}
+    input[type=text]{padding:9px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#e8f6ff;min-width:160px}
+    .controls{display:flex;gap:8px;align-items:center}
+    button{background:linear-gradient(180deg,#0f3b61,#0b2c4d);border:1px solid rgba(255,255,255,0.04);color:#dff2ff;padding:8px 12px;border-radius:9px;cursor:pointer}
+    button.ghost{background:transparent;border:1px dashed rgba(255,255,255,0.04);color:var(--muted)}
+    .status{padding:6px 10px;border-radius:8px;font-weight:700}
+    .status.pending{background:transparent;color:var(--muted)}
+    .status.done{background:linear-gradient(90deg,#083a28,#0b5b34);color:var(--ok)}
+
+    /* right column */
+    .side{position:sticky;top:20px;align-self:start}
+    pre.ctx{background:rgba(6,18,32,0.35);padding:12px;border-radius:8px;color:var(--muted);font-size:12px;overflow:auto;max-height:360px}
+
+    footer.note{margin-top:14px;color:var(--muted);font-size:13px}
+
+    /* responsive */
+    @media (max-width:880px){
+      .grid{grid-template-columns:1fr; }
+      .side{position:relative}
+      .wrap{padding:12px}
+      .card{padding:12px}
+    }
   </style>
 
-  <!-- farcaster miniapp sdk (umd) and ethers (v6) -->
+  <!-- farcaster miniapp sdk (umd) + ethers v6 -->
   <script src="https://cdn.jsdelivr.net/npm/@farcaster/miniapp-sdk@latest/dist/miniapp-sdk.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/ethers@6/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-  <div class="card" role="main">
-    <header>
-      <div>
-        <h1>🎯 farcaster & base airdrop hub</h1>
-        <div class="small">a simple checklist to track farcaster + base actions. no private keys requested.</div>
+  <div class="wrap">
+    <header class="appbar">
+      <div class="brand">
+        <div class="logo">fa</div>
+        <div>
+          <h1>farcaster & base airdrop hub</h1>
+          <div class="subtitle">daily mission center to complete tasks, verify accounts, and stay airdrop-ready</div>
+        </div>
       </div>
-      <div id="user-block" class="small">not connected</div>
+      <div class="small" id="user-block">not connected</div>
     </header>
 
-    <div class="tabs" style="margin-top:16px">
-      <div class="tab active" data-tab="farcaster">farcaster airdrop</div>
-      <div class="tab" data-tab="base">base airdrop</div>
-      <div style="flex:1"></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <button id="reset-btn" class="ghost">reset today</button>
-      </div>
-    </div>
-
-    <div id="content" style="margin-top:16px">
-      <!-- farcaster -->
-      <div id="tab-farcaster">
-        <div class="row">
-          <div class="col">
-            <div class="task">
-              <div><div style="font-weight:700">connect wallet & link to warpcast</div><div class="meta">sign-in with your wallet (siwe optional).</div></div>
-              <div class="center"><div class="status pending" id="status-connect">not done</div><button id="btn-connect" data-do>do it</button></div>
-            </div>
-
-            <div class="task">
-              <div><div style="font-weight:700">post a cast on warpcast</div><div class="meta">post: “preparing for farcaster airdrops ✅ #airdropprep”</div></div>
-              <div class="center"><div class="status pending" id="status-post">not done</div><div style="display:flex;gap:8px"><button id="btn-post" data-do>do it</button><input id="post-proof" type="text" placeholder="paste cast url or id" /><button id="verify-post">verify</button></div></div>
-            </div>
-
-            <div class="task">
-              <div><div style="font-weight:700">join & reply in a channel</div><div class="meta">join a public channel and reply once.</div></div>
-              <div class="center"><div class="status pending" id="status-join">not done</div><div style="display:flex;gap:8px"><button id="btn-join" data-do>do it</button><input id="join-proof" type="text" placeholder="paste channel cast url or id" /><button id="verify-join">verify</button></div></div>
-            </div>
-
-            <div class="task">
-              <div><div style="font-weight:700">mint a frame / mini-app nft</div><div class="meta">if a mint exists, paste the tx hash here.</div></div>
-              <div class="center"><div class="status pending" id="status-mint">not done</div><div style="display:flex;gap:8px"><button id="btn-mint" data-do>do it</button><input id="mint-proof" type="text" placeholder="paste mint tx hash" /><button id="verify-mint">verify</button></div></div>
-            </div>
+    <main class="panel" role="main" aria-labelledby="app-title">
+      <div class="top-row">
+        <div>
+          <div class="tabs" role="tablist" aria-label="tabs">
+            <button class="tab active" data-tab="farcaster" role="tab">farcaster airdrop</button>
+            <button class="tab" data-tab="base" role="tab">base airdrop</button>
           </div>
-
-          <div class="col">
-            <div class="meta">status panel: the app will show farcaster context inside warpcast. for strong verification use a server later.</div>
-            <div style="margin-top:10px"><div style="font-weight:700">farcaster context</div><pre id="farcaster-ctx">(open inside warpcast to see context)</pre></div>
-          </div>
+          <div class="meta" style="margin-top:10px">complete daily or weekly actions. optional on-chain verification via tx hashes.</div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button id="reset-btn" class="ghost">reset progress</button>
         </div>
       </div>
 
-      <!-- base -->
-      <div id="tab-base" style="display:none">
-        <div class="row">
-          <div class="col">
+      <div class="grid">
+        <section class="column">
+          <!-- farcaster tab group -->
+          <div id="tab-farcaster" class="card">
             <div class="task">
-              <div><div style="font-weight:700">bridge a small amount to base</div><div class="meta">bridge >= $1 via an official bridge</div></div>
-              <div class="center"><div class="status pending" id="status-bridge">not done</div><div style="display:flex;gap:8px"><button id="btn-bridge" data-do>do it</button><input id="bridge-proof" type="text" placeholder="paste bridge tx hash" /><button id="verify-bridge">verify</button></div></div>
+              <div class="left">
+                <div class="title">connect wallet & link to warpcast</div>
+                <div class="meta">sign-in (siwe optional). opens warpcast composer when used inside warpcast.</div>
+              </div>
+              <div class="controls">
+                <div id="status-connect" class="status pending">not done</div>
+                <button id="btn-connect" data-do>do it</button>
+              </div>
             </div>
 
-            <div class="task">
-              <div><div style="font-weight:700">interact with a base dapp (swap/mint)</div><div class="meta">use any base dapp and paste tx hash</div></div>
-              <div class="center"><div class="status pending" id="status-dapp">not done</div><div style="display:flex;gap:8px"><button id="btn-dapp" data-do>do it</button><input id="dapp-proof" type="text" placeholder="paste dapp tx hash" /><button id="verify-dapp">verify</button></div></div>
+            <div class="task" style="margin-top:10px">
+              <div class="left">
+                <div class="title">post a cast on warpcast</div>
+                <div class="meta">post: “preparing for farcaster airdrops ✅ #airdropprep”</div>
+              </div>
+              <div class="controls">
+                <div id="status-post" class="status pending">not done</div>
+                <button id="btn-post" data-do>do it</button>
+                <input id="post-proof" type="text" placeholder="paste cast url or id" />
+                <button id="verify-post">verify</button>
+              </div>
             </div>
 
-            <div class="task">
-              <div><div style="font-weight:700">use base pay / coinbase feature</div><div class="meta">if available, paste proof link or tx</div></div>
-              <div class="center"><div class="status pending" id="status-basepay">not done</div><div style="display:flex;gap:8px"><button id="btn-basepay" data-do>do it</button><input id="basepay-proof" type="text" placeholder="paste proof link or tx" /><button id="verify-basepay">verify</button></div></div>
+            <div class="task" style="margin-top:10px">
+              <div class="left">
+                <div class="title">join & reply in a channel</div>
+                <div class="meta">join a public channel and reply once.</div>
+              </div>
+              <div class="controls">
+                <div id="status-join" class="status pending">not done</div>
+                <button id="btn-join" data-do>do it</button>
+                <input id="join-proof" type="text" placeholder="paste channel cast url or id" />
+                <button id="verify-join">verify</button>
+              </div>
+            </div>
+
+            <div class="task" style="margin-top:10px">
+              <div class="left">
+                <div class="title">mint a frame / mini-app nft</div>
+                <div class="meta">if a mint exists, paste the tx hash here.</div>
+              </div>
+              <div class="controls">
+                <div id="status-mint" class="status pending">not done</div>
+                <button id="btn-mint" data-do>do it</button>
+                <input id="mint-proof" type="text" placeholder="paste mint tx hash" />
+                <button id="verify-mint">verify</button>
+              </div>
             </div>
           </div>
 
-          <div class="col">
-            <div class="meta">base checks use rpc; browser rpc may face cors limits. use serverless api for reliable checks.</div>
-            <div style="margin-top:10px"><div style="font-weight:700">base output</div><pre id="base-ctx">(tx receipts here)</pre></div>
+          <!-- base tasks (hidden by default) -->
+          <div id="tab-base" class="card" style="display:none">
+            <div class="task">
+              <div class="left">
+                <div class="title">bridge a small amount to base</div>
+                <div class="meta">bridge ≥ $1 via official bridge. paste tx hash to verify.</div>
+              </div>
+              <div class="controls">
+                <div id="status-bridge" class="status pending">not done</div>
+                <button id="btn-bridge" data-do>do it</button>
+                <input id="bridge-proof" type="text" placeholder="paste bridge tx hash" />
+                <button id="verify-bridge">verify</button>
+              </div>
+            </div>
+
+            <div class="task" style="margin-top:10px">
+              <div class="left">
+                <div class="title">interact with a base dapp</div>
+                <div class="meta">swap or mint on Base and paste tx hash.</div>
+              </div>
+              <div class="controls">
+                <div id="status-dapp" class="status pending">not done</div>
+                <button id="btn-dapp" data-do>do it</button>
+                <input id="dapp-proof" type="text" placeholder="paste dapp tx hash" />
+                <button id="verify-dapp">verify</button>
+              </div>
+            </div>
+
+            <div class="task" style="margin-top:10px">
+              <div class="left">
+                <div class="title">use base pay / coinbase feature</div>
+                <div class="meta">if available, paste proof link or tx.</div>
+              </div>
+              <div class="controls">
+                <div id="status-basepay" class="status pending">not done</div>
+                <button id="btn-basepay" data-do>do it</button>
+                <input id="basepay-proof" type="text" placeholder="paste proof or tx" />
+                <button id="verify-basepay">verify</button>
+              </div>
+            </div>
           </div>
-        </div>
+        </section>
+
+        <aside class="side">
+          <div class="card">
+            <div style="font-weight:700">status panel</div>
+            <div class="meta">the app shows farcaster context when opened inside warpcast. for reliable on-chain checks use a server later.</div>
+            <div style="margin-top:10px"><div style="font-weight:700">farcaster context</div>
+              <pre id="farcaster-ctx" class="ctx">(open inside warpcast to see context)</pre>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <div style="font-weight:700">progress</div>
+            <div class="meta" style="margin-top:8px">your marks persist in your browser (local storage). reset progress anytime.</div>
+            <div style="margin-top:10px">
+              <button id="export-progress" class="ghost">export progress</button>
+            </div>
+          </div>
+        </aside>
       </div>
 
-    </div>
-
-    <footer style="margin-top:14px;font-size:12px;color:#8aa3cc">prototype: for production add server-side siwe verification and reliable on-chain checkers.</footer>
+      <footer class="note">prototype — for production add server-side siwe verification and reliable on-chain checks.</footer>
+    </main>
   </div>
 
-<script>
-/* client state */
-let state = JSON.parse(localStorage.getItem('airdrop-helper-state') || '{}');
-if(!state.date || state.date !== (new Date()).toISOString().slice(0,10)) { state = {date:(new Date()).toISOString().slice(0,10), done:{}}; }
-function saveState(){ localStorage.setItem('airdrop-helper-state', JSON.stringify(state)); }
-function setDone(key){ state.done[key]=true; saveState(); renderStatuses(); }
-function renderStatuses(){ ['connect','post','join','mint','bridge','dapp','basepay'].forEach(id=>{ const el=document.getElementById('status-'+id); if(!el) return; el.className='status '+(state.done[id] ? 'done' : 'pending'); el.textContent = state.done[id] ? 'done' : 'not done'; }); }
-renderStatuses();
+  <script>
+    /* --- small client state and behavior (same logic as before) --- */
+    let state = JSON.parse(localStorage.getItem('airdrop-helper-state') || '{}');
+    if(!state.date || state.date !== (new Date()).toISOString().slice(0,10)) { state = {date:(new Date()).toISOString().slice(0,10), done:{}}; }
+    function saveState(){ localStorage.setItem('airdrop-helper-state', JSON.stringify(state)); }
+    function setDone(key){ state.done[key]=true; saveState(); renderStatuses(); }
+    function setUndone(key){ delete state.done[key]; saveState(); renderStatuses(); }
+    function renderStatuses(){
+      ['connect','post','join','mint','bridge','dapp','basepay'].forEach(id=>{
+        const el = document.getElementById('status-'+id);
+        if(!el) return;
+        el.className = 'status ' + (state.done[id] ? 'done' : 'pending');
+        el.textContent = state.done[id] ? 'done' : 'not done';
+      });
+    }
+    renderStatuses();
 
-/* tabs */
-document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); t.classList.add('active'); const tab=t.dataset.tab; document.getElementById('tab-farcaster').style.display = tab==='farcaster' ? 'block' : 'none'; document.getElementById('tab-base').style.display = tab==='base' ? 'block' : 'none'; }));
+    /* tabs */
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const tab = t.dataset.tab;
+      document.getElementById('tab-farcaster').style.display = tab==='farcaster' ? 'block' : 'none';
+      document.getElementById('tab-base').style.display = tab==='base' ? 'block' : 'none';
+    }));
 
-/* farcaster sdk and compose safety */
-const sdk = window.MiniAppSdk ? new window.MiniAppSdk() : null;
-async function initFarcaster(){ if(!sdk){ document.getElementById('farcaster-ctx').textContent='miniapp sdk not present (open inside warpcast)'; return; } try{ const ctx = await sdk.context(); document.getElementById('farcaster-ctx').textContent = JSON.stringify(ctx,null,2); const user = ctx?.username ? '@'+ctx.username : ('fid:'+ctx?.fid||'unknown'); document.getElementById('user-block').textContent = `active: ${user}`; document.querySelectorAll('[data-do]').forEach(btn=>btn.addEventListener('click', async ()=>{ const ok = confirm(`this will open warpcast composer using the current account: ${user}. continue?`); if(!ok) return; const text='preparing for farcaster airdrops ✅ #airdropprep'; try{ if(typeof sdk.compose === 'function') await sdk.compose({ text }); else window.location.href='farcaster://compose?text='+encodeURIComponent(text); }catch(e){ window.location.href='farcaster://compose?text='+encodeURIComponent(text); } })); }catch(e){ console.warn(e); document.getElementById('farcaster-ctx').textContent='farcaster context unavailable (open inside warpcast)'; } }
-initFarcaster();
+    /* farcaster sdk + composer handling */
+    const sdk = window.MiniAppSdk ? new window.MiniAppSdk() : null;
+    async function initFarcaster(){
+      if(!sdk){
+        document.getElementById('farcaster-ctx').textContent = 'miniapp sdk not present (open inside warpcast)';
+        return;
+      }
+      try{
+        const ctx = await sdk.context();
+        document.getElementById('farcaster-ctx').textContent = JSON.stringify(ctx, null, 2);
+        const user = ctx?.username ? '@'+ctx.username : (ctx?.fid ? 'fid:'+ctx.fid : 'unknown');
+        document.getElementById('user-block').textContent = `active: ${user}`;
 
-/* verify handlers - manual + quick rpc try */
-document.getElementById('verify-post').addEventListener('click', ()=>{ const v=document.getElementById('post-proof').value.trim(); if(!v) return alert('paste cast url or id'); setDone('post'); alert('marked post done (manual).'); });
-document.getElementById('verify-join').addEventListener('click', ()=>{ const v=document.getElementById('join-proof').value.trim(); if(!v) return alert('paste channel cast url or id'); setDone('join'); alert('marked join done (manual).'); });
+        document.querySelectorAll('[data-do]').forEach(btn=>{
+          btn.addEventListener('click', async ()=>{
+            const ok = confirm(`this will open the warpcast composer using ${user}. continue?`);
+            if(!ok) return;
+            const text = 'preparing for farcaster airdrops ✅ #airdropprep';
+            try {
+              if(typeof sdk.compose === 'function') await sdk.compose({ text });
+              else window.location.href = 'farcaster://compose?text=' + encodeURIComponent(text);
+            } catch(e){
+              window.location.href = 'farcaster://compose?text=' + encodeURIComponent(text);
+            }
+          });
+        });
+      } catch(e){
+        console.warn('farcaster context read failed', e);
+        document.getElementById('farcaster-ctx').textContent = 'farcaster context unavailable (open inside warpcast).';
+      }
+    }
+    initFarcaster();
 
-document.getElementById('verify-mint').addEventListener('click', ()=>{ const v=document.getElementById('mint-proof').value.trim(); if(!v) return alert('paste mint tx hash'); checkTxInBrowser(v,'farcaster-ctx').then(ok=>{ if(ok) setDone('mint'); else if(confirm('could not verify automatically (rpc may be blocked). mark done manually?')) setDone('mint'); }); });
+    /* verify buttons: simple manual + quick attempt to read base tx (may be blocked by CORS) */
+    document.getElementById('verify-post').addEventListener('click', ()=> {
+      const v = document.getElementById('post-proof').value.trim();
+      if(!v) return alert('paste cast url or id');
+      setDone('post'); alert('marked post as done (manual).');
+    });
 
-document.getElementById('verify-bridge').addEventListener('click', ()=>{ const v=document.getElementById('bridge-proof').value.trim(); if(!v) return alert('paste bridge tx hash'); checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('bridge'); else if(confirm('could not verify automatically. mark done manually?')) setDone('bridge'); }); });
+    document.getElementById('verify-join').addEventListener('click', ()=> {
+      const v = document.getElementById('join-proof').value.trim();
+      if(!v) return alert('paste channel cast url or id');
+      setDone('join'); alert('marked join as done (manual).');
+    });
 
-document.getElementById('verify-dapp').addEventListener('click', ()=>{ const v=document.getElementById('dapp-proof').value.trim(); if(!v) return alert('paste dapp tx hash'); checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('dapp'); else if(confirm('could not verify automatically. mark done manually?')) setDone('dapp'); }); });
+    document.getElementById('verify-mint').addEventListener('click', ()=> {
+      const v = document.getElementById('mint-proof').value.trim();
+      if(!v) return alert('paste mint tx hash');
+      checkTxInBrowser(v,'farcaster-ctx').then(ok=>{ if(ok) setDone('mint'); else if(confirm('could not verify automatically. mark done manually?')) setDone('mint'); });
+    });
 
-document.getElementById('verify-basepay').addEventListener('click', ()=>{ const v=document.getElementById('basepay-proof').value.trim(); if(!v) return alert('paste proof'); if(/^0x[0-9a-fA-F]{64}$/.test(v)) checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('basepay'); else if(confirm('could not verify automatically. mark done manually?')) setDone('basepay'); }); else { setDone('basepay'); alert('marked basepay done (manual).'); } });
+    document.getElementById('verify-bridge').addEventListener('click', ()=> {
+      const v = document.getElementById('bridge-proof').value.trim();
+      if(!v) return alert('paste bridge tx hash');
+      checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('bridge'); else if(confirm('could not verify automatically. mark done manually?')) setDone('bridge'); });
+    });
 
-async function checkTxInBrowser(txHash, outputElId){ try{ const provider = new ethers.JsonRpcProvider('https://rpc.base.org'); const receipt = await provider.getTransactionReceipt(txHash); if(receipt && receipt.status===1){ document.getElementById(outputElId).textContent = JSON.stringify(receipt,null,2); return true; } else return false; }catch(e){ console.warn('rpc check failed', e); return false; } }
+    document.getElementById('verify-dapp').addEventListener('click', ()=> {
+      const v = document.getElementById('dapp-proof').value.trim();
+      if(!v) return alert('paste dapp tx hash');
+      checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('dapp'); else if(confirm('could not verify automatically. mark done manually?')) setDone('dapp'); });
+    });
 
-document.getElementById('reset-btn').addEventListener('click', ()=>{ if(confirm("reset today's progress?")){ state.done={}; state.date=(new Date()).toISOString().slice(0,10); saveState(); renderStatuses(); alert('progress reset.'); }});
-</script>
+    document.getElementById('verify-basepay').addEventListener('click', ()=> {
+      const v = document.getElementById('basepay-proof').value.trim();
+      if(!v) return alert('paste proof link or tx');
+      if(/^0x[0-9a-fA-F]{64}$/.test(v)) {
+        checkTxInBrowser(v,'base-ctx').then(ok=>{ if(ok) setDone('basepay'); else if(confirm('could not verify automatically. mark done manually?')) setDone('basepay'); });
+      } else { setDone('basepay'); alert('marked basepay done (manual).'); }
+    });
+
+    async function checkTxInBrowser(txHash, outputElId){
+      try{
+        const provider = new ethers.JsonRpcProvider('https://rpc.base.org');
+        const receipt = await provider.getTransactionReceipt(txHash);
+        if(receipt && receipt.status === 1){
+          const el = document.getElementById(outputElId);
+          if(el) el.textContent = JSON.stringify(receipt,null,2);
+          return true;
+        }
+        return false;
+      }catch(e){
+        console.warn('rpc check failed', e);
+        return false;
+      }
+    }
+
+    /* reset + export */
+    document.getElementById('reset-btn').addEventListener('click', ()=> {
+      if(confirm('reset all progress?')){ state.done={}; state.date=(new Date()).toISOString().slice(0,10); saveState(); renderStatuses(); alert('progress reset.'); }
+    });
+
+    document.getElementById('export-progress').addEventListener('click', ()=> {
+      const data = JSON.stringify(state, null, 2);
+      const w = window.open('about:blank','_blank');
+      w.document.write('<pre>'+data.replace(/</g,'&lt;')+'</pre>');
+    });
+  </script>
 </body>
 </html>
