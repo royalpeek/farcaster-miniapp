@@ -1,7 +1,8 @@
 {
   "name": "farcaster & base airdrop hub",
   "description": "mini app to guide users through farcaster + base airdrop prep tasks.",
-  "url": "https://YOUR_DOMAIN",
+  "icon": "https://farcaster-miniapp-7misnxy11-roybles-projects.vercel.app/icon.png",
+  "url": "https://farcaster-miniapp-7misnxy11-roybles-projects.vercel.app",
   "permissions": ["user_context"],
   "manifest_version": "1.0"
 }
